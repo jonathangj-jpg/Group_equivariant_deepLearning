@@ -9,9 +9,11 @@ dependencies = [
     "networkx>=3.6.1",
     "numpy>=2.4.4",
     "pandas>=3.0.1",
+    "plotly>=6.7.0",
     "pyglet>=1.4,<2",
     "scipy>=1.17.1",
     "torch",
+    "torch-geometric>=2.7.0",
     "trimesh>=4.11.5",
 ]
 

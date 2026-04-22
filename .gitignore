@@ -5,6 +5,7 @@ build/
 dist/
 wheels/
 *.egg-info
+qm9_data/
 
 # Virtual environments
 .venv
