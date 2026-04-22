@@ -1,14 +1,23 @@
 [project]
-name = "fagprojekt"
+name = "group-equivariant-deeplearning"
 version = "0.1.0"
-description = "Add your description here"
+description = "Project for group equivariant deep learning"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "matplotlib>=3.10.8",
     "networkx>=3.6.1",
     "numpy>=2.4.4",
+    "pandas>=3.0.1",
     "pyglet>=1.4,<2",
     "scipy>=1.17.1",
+    "torch",
     "trimesh>=4.11.5",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
