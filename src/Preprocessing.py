@@ -1,6 +1,10 @@
+import csv
+from pathlib import Path
 import torch
+import torch.nn.functional as F
 from e3nn import o3
-import e3nn
+import e3nn.nn
+import e3nn.math
 import torch_geometric
 from sklearn.model_selection import GroupShuffleSplit
 
@@ -24,7 +28,7 @@ def load_qm9(
 
     dataset = torch_geometric.datasets.QM9(root=root)
 
-    # Reproducible shuffle, then optional subset for small-data experiments.
+    # Reproducible shuffle
     generator = torch.Generator().manual_seed(seed)
     perm = torch.randperm(len(dataset), generator=generator)
     if subset is not None:
@@ -39,7 +43,7 @@ def load_qm9(
     val_set = dataset[n_train : n_train + n_val]
     test_set = dataset[n_train + n_val :]
 
-    # Standardization statistics computed on the train split only (no leakage).
+    # Standardization computed on the train split only (no dataleakage)
     y_train = torch.cat([d.y[:, target] for d in train_set])
     y_mean, y_std = y_train.mean(), y_train.std()
 
