@@ -1,17 +1,10 @@
-import csv
-from pathlib import Path
 import torch
-import torch.nn.functional as F
 from e3nn import o3
-import e3nn.nn
 import e3nn.math
 import torch_geometric
 from sklearn.model_selection import GroupShuffleSplit
 
 from figure_dataset import generate_dataset
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"Using device: {device}")
 
 def load_figure(n_points=100, n_samples=10, n_augmentations=10):
     ...
@@ -52,3 +45,6 @@ def load_qm9(
     test_loader = torch.geometric.loader.DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, test_loader, y_mean, y_std
+
+def build_qm9_graph_inputs():
+    ...
