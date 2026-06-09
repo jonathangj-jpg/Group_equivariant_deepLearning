@@ -6,6 +6,7 @@ dist/
 wheels/
 *.egg-info
 qm9_data/
+Lollefil
 
 # Virtual environments
 .venv
