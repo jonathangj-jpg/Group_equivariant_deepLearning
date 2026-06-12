@@ -37,9 +37,7 @@ class Network(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
         
-        self.irreps_sh = o3.Irreps.spherical_harmonics(3)
-
-        irreps = self.irreps_sh
+        irreps = o3.Irreps("5x0e")
 
         # First layer with gate
         gate = Gate(
@@ -54,7 +52,7 @@ class Network(torch.nn.Module):
         irreps = self.gate.irreps_out
 
         # Final layer
-        self.final = Convolution(irreps, self.irreps_sh, "0o", self.num_neighbors)
+        self.final = Convolution(irreps, self.irreps_sh, "0e")
         self.irreps_out = self.final.irreps_out
 
     def forward(self, data) -> torch.Tensor:
@@ -66,8 +64,9 @@ class Network(torch.nn.Module):
             soft_one_hot_linspace(x=edge_vec.norm(dim=1), start=0.5, end=4.5, number=16, basis="smooth_finite", cutoff=True)
             * 16**0.5
         )
-
-        x = scatter(edge_attr, edge_dst, dim=0 , reduce="mean")
+        
+        # one hot encoding of batch of molecules
+        x = (data.z[:, None] == torch.tensor([1,6,7,8,9], device=data.z.device)).to(data.pos.dtype)
 
         x = self.conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
         x = self.gate(x)
