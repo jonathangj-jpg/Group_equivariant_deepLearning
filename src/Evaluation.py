@@ -17,7 +17,18 @@ print(f"Using device: {device}")
 
 @torch.no_grad()
 def evaluate(model, loader, y_mean, y_std, target):
-    ...
+    model.eval()
+    total_abs_error = 0.0
+    total_samples = 0
+
+    for data in loader:
+        data = data.to(device)
+        pred = model(data).squeeze(-1) * y_std + y_mean
+        target_y = data.y[:, target]
+        total_abs_error += (pred - target_y).abs().sum().item()
+        total_samples += target_y.numel()
+
+    return total_abs_error / total_samples
     
 def train(
     model,
