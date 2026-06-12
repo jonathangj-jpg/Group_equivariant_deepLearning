@@ -24,7 +24,7 @@ class Convolution(torch.nn.Module):
             internal_weights=False,
             shared_weights=False,
         )
-        self.fc = FullyConnectedNet([3, 256, tp.weight_numel], torch.relu)
+        self.fc = FullyConnectedNet([16, 256, tp.weight_numel], torch.relu)
         self.tp = tp
         self.irreps_out = self.tp.irreps_out
 
@@ -62,12 +62,12 @@ class Network(torch.nn.Module):
     def forward(self, data) -> torch.Tensor:
         num_nodes = 4  # typical number of nodes
 
-        edge_src, edge_dst = radius_graph(x=data.pos, r=2.5, batch=data.batch)
+        edge_src, edge_dst = radius_graph(x=data.pos, r=4.5, batch=data.batch)
         edge_vec = data.pos[edge_src] - data.pos[edge_dst]
         edge_attr = o3.spherical_harmonics(l=self.irreps_sh, x=edge_vec, normalize=True, normalization="component")
         edge_length_embedded = (
-            soft_one_hot_linspace(x=edge_vec.norm(dim=1), start=0.5, end=2.5, number=3, basis="smooth_finite", cutoff=True)
-            * 3**0.5
+            soft_one_hot_linspace(x=edge_vec.norm(dim=1), start=0.5, end=4.5, number=16, basis="smooth_finite", cutoff=True)
+            * 16**0.5
         )
 
         x = scatter(edge_attr, edge_dst, dim=0).div(self.num_neighbors**0.5)
