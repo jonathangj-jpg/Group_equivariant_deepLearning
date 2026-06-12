@@ -38,7 +38,7 @@ class Convolution(torch.nn.Module):
 class Network(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
-        self.num_neighbors = 3.8  # typical number of neighbors
+        
         self.irreps_sh = o3.Irreps.spherical_harmonics(3)
 
         irreps = self.irreps_sh
