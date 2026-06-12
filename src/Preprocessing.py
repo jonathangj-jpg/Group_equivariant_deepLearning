@@ -1,10 +1,15 @@
-import torch
-from e3nn import o3
-import e3nn.math
-import torch_geometric
-from sklearn.model_selection import GroupShuffleSplit
+import logging
 
-from figure_dataset import generate_dataset
+import torch
+from torch_cluster import radius_graph
+from torch_geometric.loader import DataLoader
+from torch_geometric.datasets import QM9
+
+from e3nn import o3
+from e3nn.nn import FullyConnectedNet, Gate
+from e3nn.o3 import FullyConnectedTensorProduct
+from e3nn.math import soft_one_hot_linspace
+from e3nn.util.test import assert_equivariant
 
 def load_figure(n_points=100, n_samples=10, n_augmentations=10):
     ...
@@ -19,7 +24,7 @@ def load_qm9(
     seed=42,
 ):
 
-    dataset = torch_geometric.datasets.QM9(root=root)
+    dataset = QM9(root=root)
 
     # Reproducible shuffle
     generator = torch.Generator().manual_seed(seed)
@@ -40,11 +45,13 @@ def load_qm9(
     y_train = torch.cat([d.y[:, target] for d in train_set])
     y_mean, y_std = y_train.mean(), y_train.std()
 
-    train_loader = torch.geometric.loader.DataLoader(train_set, batch_size=batch_size, shuffle=True)
-    val_loader = torch.geometric.loader.DataLoader(val_set, batch_size=batch_size, shuffle=False)
-    test_loader = torch.geometric.loader.DataLoader(test_set, batch_size=batch_size, shuffle=False)
+    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
     return train_loader, val_loader, test_loader, y_mean, y_std
 
 def build_qm9_graph_inputs():
     ...
+
+load_qm9()

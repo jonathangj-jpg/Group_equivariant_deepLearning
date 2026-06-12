@@ -1,15 +1,18 @@
+import logging
+
 import torch
-import torch.nn.functional as F
+from torch_cluster import radius_graph
+from torch_geometric.data import Data, DataLoader
+from torch_scatter import scatter
+
 from e3nn import o3
-import e3nn.nn
-import torch_geometric
+from e3nn.nn import FullyConnectedNet, Gate
+from e3nn.o3 import FullyConnectedTensorProduct
+from e3nn.math import soft_one_hot_linspace
+from e3nn.util.test import assert_equivariant
 
-
-def make_gate(irreps):
-    ...
-    
 class Convolution(torch.nn.Module):
     ...
     
-class E3EquivariantNetwork(torch.nn.Module):
+class Network(torch.nn.Module):
     ...

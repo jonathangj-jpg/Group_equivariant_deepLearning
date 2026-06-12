@@ -8,11 +8,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from Preprocessing import load_qm9, TARGET_GAP
-from E3Model import (
-    E3EquivariantNetwork,
-    LMAX, IRREPS_IN, IRREPS_HIDDEN, NUM_LAYERS, RADIUS, NUM_RADIAL,
-)
+from Preprocessing import load_qm9
+from E3Model import Network
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
