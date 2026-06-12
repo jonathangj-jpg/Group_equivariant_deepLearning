@@ -12,10 +12,8 @@ from e3nn.math import soft_one_hot_linspace
 from e3nn.util.test import assert_equivariant
 
 class Convolution(torch.nn.Module):
-    def __init__(self, irreps_in, irreps_sh, irreps_out, num_neighbors) -> None:
+    def __init__(self, irreps_in, irreps_sh, irreps_out) -> None:
         super().__init__()
-
-        self.num_neighbors = num_neighbors
 
         tp = FullyConnectedTensorProduct(
             irreps_in1=irreps_in,
@@ -60,7 +58,6 @@ class Network(torch.nn.Module):
         self.irreps_out = self.final.irreps_out
 
     def forward(self, data) -> torch.Tensor:
-        num_nodes = 4  # typical number of nodes
 
         edge_src, edge_dst = radius_graph(x=data.pos, r=4.5, batch=data.batch)
         edge_vec = data.pos[edge_src] - data.pos[edge_dst]
@@ -70,10 +67,10 @@ class Network(torch.nn.Module):
             * 16**0.5
         )
 
-        x = scatter(edge_attr, edge_dst, dim=0).div(self.num_neighbors**0.5)
+        x = scatter(edge_attr, edge_dst, dim=0 , reduce="mean")
 
         x = self.conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
         x = self.gate(x)
         x = self.final(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
 
-        return scatter(x, data.batch, dim=0).div(num_nodes**0.5)
+        return scatter(x, data.batch, dim=0 , reduce="mean")
