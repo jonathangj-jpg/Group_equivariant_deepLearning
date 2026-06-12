@@ -34,22 +34,26 @@ class Convolution(torch.nn.Module):
 
 
 class Network(torch.nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, lmax=1) -> None:
         super().__init__()
-        
+
+        self.irreps_sh = o3.Irreps.spherical_harmonics(lmax)
         irreps = o3.Irreps("5x0e")
 
-        # First layer with gate
-        gate = Gate(
-            "16x0e + 16x0o",
-            [torch.relu, torch.abs],  # scalar
-            "8x0e + 8x0o + 8x0e + 8x0o",
-            [torch.relu, torch.tanh, torch.relu, torch.tanh],  # gates (scalars)
-            "16x1o + 16x1e",  # gated tensors, num_irreps has to match with gates
-        )
-        self.conv = Convolution(irreps, self.irreps_sh, gate.irreps_in)
-        self.gate = gate
-        irreps = self.gate.irreps_out
+        self.convs = torch.nn.ModuleList()
+        self.gates = torch.nn.ModuleList()
+
+        for _ in range(5):
+            gate = Gate(
+                "16x0e + 16x0o",
+                [torch.relu, torch.abs],
+                "8x0e + 8x0o + 8x0e + 8x0o",
+                [torch.relu, torch.tanh, torch.relu, torch.tanh],
+                "16x1o + 16x1e",
+            )
+            self.convs.append(Convolution(irreps, self.irreps_sh, gate.irreps_in))
+            self.gates.append(gate)
+            irreps = gate.irreps_out
 
         # Final layer
         self.final = Convolution(irreps, self.irreps_sh, "0e")
@@ -68,8 +72,9 @@ class Network(torch.nn.Module):
         # one hot encoding of batch of molecules
         x = (data.z[:, None] == torch.tensor([1,6,7,8,9], device=data.z.device)).to(data.pos.dtype)
 
-        x = self.conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
-        x = self.gate(x)
+        for conv, gate in zip(self.convs, self.gates):
+            x = conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
+            x = gate(x)
         x = self.final(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
 
         return scatter(x, data.batch, dim=0 , reduce="mean")
