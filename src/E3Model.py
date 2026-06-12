@@ -56,7 +56,7 @@ class Network(torch.nn.Module):
         irreps = self.gate.irreps_out
 
         # Final layer
-        self.final = Convolution(irreps, self.irreps_sh, "0o + 6x0e", self.num_neighbors)
+        self.final = Convolution(irreps, self.irreps_sh, "0o", self.num_neighbors)
         self.irreps_out = self.final.irreps_out
 
     def forward(self, data) -> torch.Tensor:
