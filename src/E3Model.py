@@ -31,7 +31,7 @@ class Convolution(torch.nn.Module):
     def forward(self, node_features, edge_src, edge_dst, edge_attr, edge_scalars) -> torch.Tensor:
         weight = self.fc(edge_scalars)
         edge_features = self.tp(node_features[edge_src], edge_attr, weight)
-        node_features = scatter(edge_features, edge_dst, dim=0).div(self.num_neighbors**0.5)
+        node_features = scatter(edge_features, edge_dst, dim=0 , reduce="mean")
         return node_features
 
 
@@ -51,7 +51,7 @@ class Network(torch.nn.Module):
             [torch.relu, torch.tanh, torch.relu, torch.tanh],  # gates (scalars)
             "16x1o + 16x1e",  # gated tensors, num_irreps has to match with gates
         )
-        self.conv = Convolution(irreps, self.irreps_sh, gate.irreps_in, self.num_neighbors)
+        self.conv = Convolution(irreps, self.irreps_sh, gate.irreps_in)
         self.gate = gate
         irreps = self.gate.irreps_out
 
