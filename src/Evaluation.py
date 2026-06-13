@@ -1,4 +1,5 @@
 import csv
+import copy
 from pathlib import Path
 
 import torch
@@ -34,18 +35,24 @@ def train(
     model,
     train_loader,
     val_loader,
+    test_loader,
     y_mean,
     y_std,
     target,
     epochs=100,
     lr=1e-3,
-    weight_decay=1e-8,
+    weight_decay=1e-4,
 ):
     model = model.to(device)
     y_mean = y_mean.to(device)
     y_std = y_std.to(device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=epochs, eta_min=1e-5
+    )
     history = []
+    best_val = float("inf")
+    best_state = copy.deepcopy(model.state_dict())
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -74,7 +81,16 @@ def train(
         val_mae = evaluate(model, val_loader, y_mean, y_std, target)
         history.append((epoch, train_mse, train_mae, val_mae))
 
-    return history
+        if val_mae < best_val:
+            best_val = val_mae
+            best_state = copy.deepcopy(model.state_dict())
+
+        scheduler.step()
+
+    model.load_state_dict(best_state)
+    test_mae = evaluate(model, test_loader, y_mean, y_std, target)
+
+    return model, history, best_val, test_mae
     
 
 def save_results(history, test_mse, out_dir="results"):
