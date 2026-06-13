@@ -34,22 +34,28 @@ class Convolution(torch.nn.Module):
 
 
 class Network(torch.nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, lmax=1) -> None:
         super().__init__()
-        
+
+        self.irreps_sh = o3.Irreps.spherical_harmonics(lmax)
         irreps = o3.Irreps("5x0e")
 
-        # First layer with gate
-        gate = Gate(
+        self.convs = torch.nn.ModuleList()
+        self.gates = torch.nn.ModuleList()
+
+        for _ in range(5):
+            # Natural parity only (0e scalars, 1o vectors) with smooth activations:
+            # silu on scalars, sigmoid on the gates
+            gate = Gate(
                 "40x0e",
                 [torch.nn.functional.silu],  # scalar
                 "20x0e",
                 [torch.sigmoid],  # gates (scalars)
                 "20x1o",  # gated tensors, num_irreps has to match with gates
-        )
-        self.conv = Convolution(irreps, self.irreps_sh, gate.irreps_in)
-        self.gate = gate
-        irreps = self.gate.irreps_out
+            )
+            self.convs.append(Convolution(irreps, self.irreps_sh, gate.irreps_in))
+            self.gates.append(gate)
+            irreps = gate.irreps_out
 
         # Final layer
         self.final = Convolution(irreps, self.irreps_sh, "0e")
@@ -64,12 +70,13 @@ class Network(torch.nn.Module):
             soft_one_hot_linspace(x=edge_vec.norm(dim=1), start=0.5, end=4.5, number=16, basis="smooth_finite", cutoff=True)
             * 16**0.5
         )
-        
+
         # one hot encoding of batch of molecules
         x = (data.z[:, None] == torch.tensor([1,6,7,8,9], device=data.z.device)).to(data.pos.dtype)
 
-        x = self.conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
-        x = self.gate(x)
+        for conv, gate in zip(self.convs, self.gates):
+            x = conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
+            x = gate(x)
         x = self.final(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
 
         return scatter(x, data.batch, dim=0 , reduce="mean")
