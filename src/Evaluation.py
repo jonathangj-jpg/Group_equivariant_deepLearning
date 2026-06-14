@@ -1,6 +1,4 @@
-import csv
 import copy
-from pathlib import Path
 
 import torch
 import torch.nn.functional as F
@@ -8,9 +6,6 @@ import torch.nn.functional as F
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-
-from Preprocessing import load_qm9
-from E3Model import Network
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"Using device: {device}")
@@ -80,6 +75,7 @@ def train(
         train_mae = (total_abs_error / total_samples) * y_std.item()
         val_mae = evaluate(model, val_loader, y_mean, y_std, target)
         history.append((epoch, train_mse, train_mae, val_mae))
+        print(f"epoch {epoch:3d} | train MSE {train_mse:.4f} | train MAE {train_mae:.4f} eV | val MAE {val_mae:.4f} eV")
 
         if val_mae < best_val:
             best_val = val_mae
@@ -91,11 +87,3 @@ def train(
     test_mae = evaluate(model, test_loader, y_mean, y_std, target)
 
     return model, history, best_val, test_mae
-    
-
-def save_results(history, test_mse, out_dir="results"):
-    ...
-    
-
-def plot_history(history, out_dir="results"):
-    ...
