@@ -42,6 +42,7 @@ class Network(torch.nn.Module):
 
         self.convs = torch.nn.ModuleList()
         self.gates = torch.nn.ModuleList()
+        self.self_interactions = torch.nn.ModuleList()
 
         for _ in range(5):
             # Natural parity only (0e scalars, 1o vectors) with smooth activations:
@@ -54,12 +55,21 @@ class Network(torch.nn.Module):
                 "20x1o",  # gated tensors, num_irreps has to match with gates
             )
             self.convs.append(Convolution(irreps, self.irreps_sh, gate.irreps_in))
+            self.self_interactions.append(o3.Linear(irreps, gate.irreps_in))
             self.gates.append(gate)
             irreps = gate.irreps_out
 
         # Final layer
-        self.final = Convolution(irreps, self.irreps_sh, "0e")
-        self.irreps_out = self.final.irreps_out
+        self.final = Convolution(irreps, self.irreps_sh, "64x0e")
+        self.final_self_interaction = o3.Linear(irreps, "64x0e")
+        self.irreps_out = o3.Irreps("0e")
+
+        # MLP readout head
+        self.mlp = torch.nn.Sequential(
+            torch.nn.Linear(64, 64),
+            torch.nn.SiLU(),
+            torch.nn.Linear(64, 1),
+        )
 
     def forward(self, data) -> torch.Tensor:
 
@@ -74,9 +84,9 @@ class Network(torch.nn.Module):
         # one hot encoding of batch of molecules
         x = (data.z[:, None] == torch.tensor([1,6,7,8,9], device=data.z.device)).to(data.pos.dtype)
 
-        for conv, gate in zip(self.convs, self.gates):
-            x = conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
-            x = gate(x)
-        x = self.final(x, edge_src, edge_dst, edge_attr, edge_length_embedded)
+        for conv, gate, lin in zip(self.convs, self.gates, self.self_interactions):
+            x = gate(conv(x, edge_src, edge_dst, edge_attr, edge_length_embedded) + lin(x))
 
-        return scatter(x, data.batch, dim=0 , reduce="mean")
+        x = self.final(x, edge_src, edge_dst, edge_attr, edge_length_embedded) + self.final_self_interaction(x)
+        x = scatter(x, data.batch, dim=0, reduce="mean")
+        return self.mlp(x)
