@@ -37,6 +37,7 @@ def train(
     epochs=100,
     lr=1e-3,
     weight_decay=1e-4,
+    patience=20,
 ):
     model = model.to(device)
     y_mean = y_mean.to(device)
@@ -48,6 +49,7 @@ def train(
     history = []
     best_val = float("inf")
     best_state = copy.deepcopy(model.state_dict())
+    epochs_no_improve = 0
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -80,6 +82,11 @@ def train(
         if val_mae < best_val:
             best_val = val_mae
             best_state = copy.deepcopy(model.state_dict())
+            epochs_no_improve = 0
+        else:
+            epochs_no_improve += 1
+            if epochs_no_improve >= patience:
+                break
 
         scheduler.step()
 
