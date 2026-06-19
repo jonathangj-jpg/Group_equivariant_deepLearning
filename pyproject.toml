@@ -22,6 +22,7 @@ dependencies = [
     "torch-geometric>=2.7.0",
     "torch-scatter>=2.1.2",
     "trimesh>=4.11.5",
+    "scikit-optimize>=0.10.2",
 ]
 
 [build-system]
