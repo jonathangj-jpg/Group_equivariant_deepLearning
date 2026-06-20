@@ -20,7 +20,7 @@ If you do not use `uv`, the scripts can also be run with regular `python`, as lo
 uv run python qm9data.py
 ```
 
-`qm9data.py` downloads QM9 to `./qm9_data` the first time the script is run. The script prints basic information about the first molecule and opens a 3D visualization with Plotly.
+`qm9data.py` downloads QM9 to `./qm9_data` the first time the script is run and prints basic information about the first molecule.
 
 This is not a required training step, but it is a useful sanity check to verify that QM9 can be downloaded and read correctly.
 
@@ -73,14 +73,12 @@ The results are written to:
 
 ## File Overview
 
-| File | Purpose |
-| --- | --- |
-| `qm9data.py` | Downloads/loads QM9 and visualizes a single molecule. Useful for the first data check. |
-| `src/Preprocessing.py` | Contains `load_qm9(...)`, which handles splitting, subsets, standardization, and DataLoaders. |
-| `src/E3Model.py` | Contains the E(3)-equivariant model (`Network`) with e3nn layers. |
-| `src/Evaluation.py` | Contains the training loop, validation, test evaluation, and device selection. |
-| `main.py` | Main script that connects data, preprocessing, model, training, and results. |
-| `figure_dataset.py` | Separate toy dataset with simple 3D shapes. Not part of the QM9 training pipeline. |
+- `qm9data.py` - imports/checks the data
+- `main.py` - runs training and testing
+- `src/Preprocessing.py` - handles preprocessing
+- `src/E3Model.py` - contains the model architecture
+- `src/Evaluation.py` - handles evaluation
+- `invariance_equivariance.ipynb` - shows invariance and equivariance of the convolution
 
 ## Short Version
 
@@ -92,4 +90,4 @@ uv run python qm9data.py
 uv run python main.py
 ```
 
-`qm9data.py` is only for download/check/visualization. The actual preprocessing and training happen automatically when `main.py` is run.
+`qm9data.py` is only for download/checking the dataset. The actual preprocessing and training happen automatically when `main.py` is run.
