@@ -34,10 +34,11 @@ class Convolution(torch.nn.Module):
 
 
 class Network(torch.nn.Module):
-    def __init__(self, lmax=1) -> None:
+    def __init__(self, lmax=1, dropout=0.2, r=4.5) -> None:
         super().__init__()
 
         self.irreps_sh = o3.Irreps.spherical_harmonics(lmax)
+        self.r = r
         irreps = o3.Irreps("5x0e")
 
         self.convs = torch.nn.ModuleList()
@@ -45,15 +46,24 @@ class Network(torch.nn.Module):
         self.self_interactions = torch.nn.ModuleList()
 
         for _ in range(5):
-            # Natural parity only (0e scalars, 1o vectors) with smooth activations:
-            # silu on scalars, sigmoid on the gates
-            gate = Gate(
-                "40x0e",
-                [torch.nn.functional.silu],  # scalar
-                "20x0e",
-                [torch.sigmoid],  # gates (scalars)
-                "20x1o",  # gated tensors, num_irreps has to match with gates
-            )
+            if lmax == 0:
+                gate = Gate(
+                    "68x0e",
+                    [torch.nn.functional.silu],
+                    "",
+                    [],
+                    "",
+                )
+            else:
+                # Natural parity only (0e scalars, 1o vectors) with smooth activations:
+                # silu on scalars, sigmoid on the gates
+                gate = Gate(
+                    "40x0e",
+                    [torch.nn.functional.silu],  # scalar
+                    "20x0e",
+                    [torch.sigmoid],  # gates (scalars)
+                    "20x1o",  # gated tensors, num_irreps has to match with gates
+                )
             self.convs.append(Convolution(irreps, self.irreps_sh, gate.irreps_in))
             self.self_interactions.append(o3.Linear(irreps, gate.irreps_in))
             self.gates.append(gate)
@@ -68,16 +78,17 @@ class Network(torch.nn.Module):
         self.mlp = torch.nn.Sequential(
             torch.nn.Linear(64, 64),
             torch.nn.SiLU(),
+            torch.nn.Dropout(dropout),
             torch.nn.Linear(64, 1),
         )
 
     def forward(self, data) -> torch.Tensor:
 
-        edge_src, edge_dst = radius_graph(x=data.pos, r=4.5, batch=data.batch)
+        edge_src, edge_dst = radius_graph(x=data.pos, r=self.r, batch=data.batch)
         edge_vec = data.pos[edge_src] - data.pos[edge_dst]
         edge_attr = o3.spherical_harmonics(l=self.irreps_sh, x=edge_vec, normalize=True, normalization="component")
         edge_length_embedded = (
-            soft_one_hot_linspace(x=edge_vec.norm(dim=1), start=0.5, end=4.5, number=16, basis="smooth_finite", cutoff=True)
+            soft_one_hot_linspace(x=edge_vec.norm(dim=1), start=0.5, end=self.r, number=16, basis="smooth_finite", cutoff=True)
             * 16**0.5
         )
 
