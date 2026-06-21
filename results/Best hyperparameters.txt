@@ -1,0 +1,20 @@
+This is just a copy paste of the terminal output we got from the baysian optimzation file:
+
+l=0:
+Best validation MAE: 0.1527 eV
+Best hyperparameters:
+  lr: 0.0015977084099269045
+  weight_decay: 1.0974137910112876e-06
+  dropout: 0.010025864511046036
+  r: 3.4531164194681523
+  batch_size: 8
+
+
+l=1:
+Best validation MAE: 0.1446 eV
+Best hyperparameters:
+  lr: 0.0021367384353078
+  weight_decay: 0.009003150257857846
+  dropout: 0.01901422634781214
+  r: 3.007031871631741
+  batch_size: 8
