@@ -7,14 +7,18 @@ from src.Preprocessing import load_qm9
 from src.E3Model import Network
 from src.Evaluation import train, device
 
-SEEDS = [0, 1, 2, 3, 4, 5, 6, 7]
-SUBSETS = [5000, 25000]
+SEEDS = [0, 1, 2, 3, 4]
+SUBSETS = [10000]
 LMAXES = [0, 1]
-DATA_SEED = 1747
+DATA_SEED = 915
 TARGET = 4
-BATCH_SIZE = 32
 EPOCHS = 100
 OUT_DIR = "results"
+
+HPARAMS = {
+    0: dict(batch_size=8, lr=0.0015977084099269045, weight_decay=1.0974137910112876e-06, dropout=0.010025864511046036, r=3.4531164194681523),
+    1: dict(batch_size=8, lr=0.0021367384353078, weight_decay=0.009003150257857846, dropout=0.01901422634781214, r=3.007031871631741),
+}
 
 
 def main():
@@ -24,21 +28,23 @@ def main():
         test_writer.writerow(["lmax", "subset", "seed", "test_mae_eV"])
         for subset in SUBSETS:
             for lmax in LMAXES:
+                hp = HPARAMS[lmax]
                 with open(f"{OUT_DIR}/l{lmax}_n{subset}.csv", "w", newline="") as file:
                     writer = csv.writer(file)
                     writer.writerow(["seed", "epoch", "train_mse", "train_mae_eV", "val_mae_eV"])
                     for seed in SEEDS:
                         train_loader, val_loader, test_loader, y_mean, y_std = load_qm9(
-                            target=TARGET, subset=subset, batch_size=BATCH_SIZE, seed=DATA_SEED
+                            target=TARGET, subset=subset, batch_size=hp["batch_size"], seed=DATA_SEED
                         )
                         torch.manual_seed(seed)
-                        model = Network(lmax=lmax)
+                        model = Network(lmax=lmax, dropout=hp["dropout"], r=hp["r"])
 
                         print(f"=== l={lmax} n={subset} seed={seed} ===")
 
                         _, history, _, test_mae = train(
                             model, train_loader, val_loader, test_loader,
                             y_mean, y_std, TARGET, epochs=EPOCHS,
+                            lr=hp["lr"], weight_decay=hp["weight_decay"],
                         )
 
                         if device.type == "cuda":
