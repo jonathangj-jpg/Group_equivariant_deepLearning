@@ -56,12 +56,11 @@ The run writes:
   products, spherical harmonics, gating, and message passing.
 - `src/Evaluation.py` - contains the training loop, validation/test evaluation,
   optimizer, scheduler, and early stopping.
-- `baysian_optimization.py` - runs Bayesian hyperparameter optimization for one
+- `baysian_optimization.py` - runs Bayesian hyperparameter optimization for one.
   model setting.
 - `invariance_equivariance.ipynb` - notebook for exploring invariance and
   equivariance.
 - `data_work.ipynb` - notebook for dataset exploration.
-- `show_box.py` - small 3D shape/sampling visualization script using `trimesh`.
 - `results/` - saved CSV results and plots.
 - `project_files/` - project documents and reference material.
 
