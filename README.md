@@ -37,8 +37,14 @@ The main experiment settings are defined at the top of `main.py`:
 SEEDS = [0, 1, 2, 3, 4]
 SUBSETS = [10000]
 LMAXES = [0, 1]
+DATA_SEED = 915
 TARGET = 4
 EPOCHS = 100
+
+HPARAMS = {
+    0: dict(batch_size=8, lr=0.0015977084099269045, weight_decay=1.0974137910112876e-06, dropout=0.010025864511046036, r=3.4531164194681523),
+    1: dict(batch_size=8, lr=0.0021367384353078, weight_decay=0.009003150257857846, dropout=0.01901422634781214, r=3.007031871631741),
+} # Here the optimized hyperparameters obtained from baysian_optimization.py
 ```
 
 The run writes:
@@ -55,12 +61,12 @@ The run writes:
 - `src/E3Model.py` - defines the E(3)-equivariant model using e3nn tensor
   products, spherical harmonics, gating, and message passing.
 - `src/Evaluation.py` - contains the training loop, validation/test evaluation,
-  optimizer, scheduler, and early stopping.
+  optimizer, scheduler.
 - `baysian_optimization.py` - runs Bayesian hyperparameter optimization for one.
   model setting.
 - `invariance_equivariance.ipynb` - notebook for exploring invariance and
-  equivariance.
-- `data_work.ipynb` - notebook for dataset exploration.
+  equivariance of models.
+- `data_work.ipynb` - notebook for results and dataset analysis.
 - `results/` - saved CSV results and plots.
 - `project_files/` - project documents and reference material.
 
